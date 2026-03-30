@@ -1,0 +1,28 @@
+<!-- client/public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MarketSphere</title>
+    
+    <!-- Updated CSP to fix CORS issues -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval' ws: wss:;
+      script-src 'self' https: 'unsafe-inline' 'unsafe-eval' https://js.paystack.co;
+      style-src 'self' https: 'unsafe-inline' https://paystack.com;
+      img-src 'self' https: data: blob: *;
+      connect-src 'self' https: http://localhost:5000 ws: wss:;
+      frame-src 'self' https: https://js.paystack.co;
+      font-src 'self' https: data:;
+    ">
+    
+    <!-- Paystack script -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
