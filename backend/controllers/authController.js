@@ -287,49 +287,50 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// backend/controllers/authController.js - Verify updateProfile function
 export const updateProfile = async (req, res) => {
   let client;
   try {
     const userId = req.userId;
     const { name, email, phone, bio, location, website } = req.body;
 
+    console.log('Updating profile for user:', userId);
+    console.log('Update data:', { name, email, phone, bio, location, website });
+
     client = await pool.connect();
 
-    if (email) {
-      const emailCheck = await client.query(
-        "SELECT id FROM users WHERE email = $1 AND id != $2",
-        [email, userId]
-      );
-      if (emailCheck.rows.length > 0) {
-        return res.status(400).json({ message: "Email already in use" });
-      }
+    // Don't allow email change to avoid conflicts
+    const updateQuery = `
+      UPDATE users 
+       SET name = COALESCE($1, name),
+           phone = COALESCE($2, phone),
+           bio = COALESCE($3, bio),
+           location = COALESCE($4, location),
+           website = COALESCE($5, website)
+       WHERE id = $6
+       RETURNING id, name, email, phone, bio, location, website, avatar, role
+    `;
+    
+    const result = await client.query(updateQuery, [
+      name, phone, bio, location, website, userId
+    ]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const result = await client.query(
-      `UPDATE users 
-       SET name = COALESCE($1, name),
-           email = COALESCE($2, email),
-           phone = COALESCE($3, phone),
-           bio = COALESCE($4, bio),
-           location = COALESCE($5, location),
-           website = COALESCE($6, website)
-       WHERE id = $7
-       RETURNING id, name, email, phone, bio, location, website, avatar`,
-      [name, email, phone, bio, location, website, userId]
-    );
-
+    console.log('Profile updated successfully');
     res.json({
       message: "Profile updated successfully",
       user: result.rows[0]
     });
   } catch (err) {
     console.error("Update Profile Error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: err.message });
   } finally {
     if (client) client.release();
   }
 };
-
 export const updateProfilePicture = async (req, res) => {
   let client;
   try {

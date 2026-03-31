@@ -1,393 +1,378 @@
-// src/pages/Profile.jsx - OPTIMIZED FOR FAST LOADING
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { getProfile, updateProfilePicture, getOrders, getReviews } from "../utils/api";
-import { FaUserCircle, FaEnvelope, FaCalendarAlt, FaShoppingCart, FaStar, FaStore, FaPhone, FaMapMarkerAlt, FaCheckCircle, FaTrophy, FaCamera, FaSpinner, FaEdit, FaSave, FaTimes, FaUser, FaGlobe, FaInfoCircle } from "react-icons/fa";
+// src/pages/Profile.jsx
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Form, Button, Card, Alert, Spinner, Row, Col, Modal, Badge } from "react-bootstrap";
-import axios from "axios";
+import { getProfile, updateProfile, updateProfilePicture } from "../utils/api";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarker, FaGlobe, FaCamera, FaSave, FaEdit } from "react-icons/fa";
 
 const Profile = () => {
-  const { user: authUser, setUser } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [reviews, setReviews] = useState([]);
+  const { user: authUser } = useAuth();
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(null);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", email: "", phone: "", bio: "", location: "", website: ""
+    name: "",
+    email: "",
+    phone: "",
+    bio: "",
+    location: "",
+    website: ""
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  // Memoized stats for performance
-  const stats = useMemo(() => ({
-    totalOrders: Array.isArray(orders) ? orders.length : 0,
-    totalSpent: Array.isArray(orders) ? orders.reduce((acc, o) => acc + (o.total_amount || 0), 0) : 0,
-    averageRating: Array.isArray(reviews) && reviews.length > 0 
-      ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length).toFixed(1) : 0,
-    completedOrders: Array.isArray(orders) ? orders.filter(o => o.status === 'completed' || o.status === 'delivered').length : 0
-  }), [orders, reviews]);
+  const BASE_URL = import.meta.env.VITE_API_URL || "https://market-store-2eop.onrender.com";
 
-  // Fetch all data in parallel for speed
   useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading(true);
-      try {
-        const [profileRes, ordersRes, reviewsRes] = await Promise.allSettled([
-          getProfile(),
-          getOrders(),
-          getReviews()
-        ]);
-
-        if (profileRes.status === 'fulfilled') {
-          const userData = profileRes.value.data?.user || profileRes.value.data;
-          setProfile(userData);
-          setFormData({
-            name: userData.name || "",
-            email: userData.email || "",
-            phone: userData.phone || "",
-            bio: userData.bio || "",
-            location: userData.location || "",
-            website: userData.website || ""
-          });
-          if (userData.avatar) {
-            setAvatarPreview(userData.avatar.startsWith('http') ? userData.avatar : `http://localhost:5000${userData.avatar}`);
-          }
-        }
-
-        if (ordersRes.status === 'fulfilled') {
-          setOrders(Array.isArray(ordersRes.value.data) ? ordersRes.value.data : []);
-        }
-
-        if (reviewsRes.status === 'fulfilled') {
-          setReviews(Array.isArray(reviewsRes.value.data) ? reviewsRes.value.data : []);
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        showMessage("danger", "Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllData();
+    fetchProfile();
   }, []);
 
-  const showMessage = (type, text) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await getProfile();
+      const userData = res.data.user;
+      setUser(userData);
+      setFormData({
+        name: userData.name || "",
+        email: userData.email || "",
+        phone: userData.phone || "",
+        bio: userData.bio || "",
+        location: userData.location || "",
+        website: userData.website || ""
+      });
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+      setMessage({ type: "danger", text: "Failed to load profile" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    setAvatarPreview(URL.createObjectURL(file));
-    setUploadingAvatar(true);
-    
-    const formData = new FormData();
-    formData.append("avatar", file);
-    
-    try {
-      const res = await updateProfilePicture(formData);
-      showMessage("success", "Avatar updated!");
-      setUser(prev => ({ ...prev, avatar: res.data.profilePicture }));
-    } catch (err) {
-      showMessage("danger", "Failed to update avatar");
-      setAvatarPreview(profile?.avatar);
-    } finally {
-      setUploadingAvatar(false);
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setProfilePicture(file);
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
-  const handleSaveProfile = async () => {
-    setSaving(true);
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setMessage({ type: "", text: "" });
+    
     try {
-      const res = await axios.put("/api/auth/update-profile", formData);
-      setUser(prev => ({ ...prev, ...res.data.user }));
-      setProfile(prev => ({ ...prev, ...res.data.user }));
-      showMessage("success", "Profile updated!");
-      setEditMode(false);
+      setLoading(true);
+      await updateProfile(formData);
+      setUser(prev => ({ ...prev, ...formData }));
+      setEditing(false);
+      setMessage({ type: "success", text: "Profile updated successfully!" });
+      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
     } catch (err) {
-      showMessage("danger", "Failed to update profile");
+      console.error("Error updating profile:", err);
+      setMessage({ type: "danger", text: err.response?.data?.message || "Failed to update profile" });
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const handleUpdatePicture = async () => {
+    if (!profilePicture) return;
+    
+    try {
+      const formData = new FormData();
+      formData.append("profilePicture", profilePicture);
+      
+      await updateProfilePicture(formData);
+      await fetchProfile(); // Refresh profile data
+      setProfilePicture(null);
+      setPreviewImage(null);
+      setMessage({ type: "success", text: "Profile picture updated!" });
+      setTimeout(() => setMessage({ type: "", text: "" }), 3000);
+    } catch (err) {
+      console.error("Error updating picture:", err);
+      setMessage({ type: "danger", text: "Failed to update profile picture" });
+    }
   };
 
-  if (loading) {
+  const getImageUrl = () => {
+    if (previewImage) return previewImage;
+    if (user?.avatar) {
+      return user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`;
+    }
+    return `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=667eea&color=fff&size=150`;
+  };
+
+  if (loading && !user) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
-        <Spinner animation="border" variant="primary" />
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container-fluid px-4">
-      {/* Success/Error Toast */}
-      {message.text && (
-        <div style={{ position: "fixed", top: "20px", right: "20px", zIndex: 9999 }}>
-          <Alert variant={message.type} dismissible onClose={() => setMessage({ type: "", text: "" })}>
-            {message.text}
-          </Alert>
-        </div>
-      )}
+    <div style={{ background: "#f8f9fa", minHeight: "100vh", paddingBottom: "80px" }}>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        padding: "40px 24px",
+        color: "white",
+        borderRadius: "0 0 30px 30px"
+      }}>
+        <h1 className="fw-bold mb-2">My Profile</h1>
+        <p className="mb-0 opacity-75">Manage your account information</p>
+      </div>
 
-      {/* Profile Header Card */}
-      <Card className="border-0 shadow-lg overflow-hidden mb-4" style={{ borderRadius: "20px" }}>
-        <div style={{
-          height: "120px",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          position: "relative"
-        }}>
-          <div style={{
-            position: "absolute",
-            bottom: "-50px",
-            left: "30px",
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "20px"
-          }}>
-            {/* Avatar */}
-            <div className="position-relative">
-              <div style={{
-                width: "120px",
-                height: "120px",
-                borderRadius: "50%",
-                border: "4px solid white",
-                boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                overflow: "hidden",
-                background: "white"
-              }}>
-                {uploadingAvatar ? (
-                  <div className="d-flex align-items-center justify-content-center h-100">
-                    <Spinner size="sm" />
-                  </div>
-                ) : avatarPreview ? (
-                  <img src={avatarPreview} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <div className="d-flex align-items-center justify-content-center h-100 bg-light">
-                    <FaUserCircle size={70} className="text-primary" />
-                  </div>
-                )}
+      {/* Profile Content */}
+      <div className="container px-3" style={{ marginTop: "-30px" }}>
+        <div className="card border-0 shadow-lg rounded-4">
+          <div className="card-body p-4">
+            {/* Profile Picture Section */}
+            <div className="text-center mb-4">
+              <div className="position-relative d-inline-block">
+                <img
+                  src={getImageUrl()}
+                  alt={user?.name}
+                  style={{
+                    width: "120px",
+                    height: "120px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "4px solid white",
+                    boxShadow: "0 4px 15px rgba(0,0,0,0.1)"
+                  }}
+                />
+                <label
+                  htmlFor="profilePicture"
+                  style={{
+                    position: "absolute",
+                    bottom: "5px",
+                    right: "5px",
+                    background: "#667eea",
+                    borderRadius: "50%",
+                    width: "35px",
+                    height: "35px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.2)"
+                  }}
+                >
+                  <FaCamera color="white" size={16} />
+                </label>
+                <input
+                  type="file"
+                  id="profilePicture"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: "none" }}
+                />
               </div>
-              <label htmlFor="avatar-upload" style={{
-                position: "absolute", bottom: "5px", right: "5px",
-                background: "#667eea", width: "32px", height: "32px",
-                borderRadius: "50%", display: "flex", alignItems: "center",
-                justifyContent: "center", cursor: "pointer", border: "2px solid white"
-              }}>
-                <FaCamera size={14} color="white" />
-                <input type="file" id="avatar-upload" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
-              </label>
+              {profilePicture && (
+                <div className="mt-2">
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={handleUpdatePicture}
+                    disabled={loading}
+                  >
+                    Save Photo
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Name & Role */}
-            <div style={{ marginBottom: "15px" }}>
-              <h2 className="fw-bold text-white mb-1">{profile?.name || authUser?.name}</h2>
-              <div className="d-flex gap-2">
-                <Badge bg="light" text="dark" className="px-3 py-2">
-                  <FaStore className="me-1" /> {profile?.role === 'seller' ? 'Seller' : 'Buyer'}
-                </Badge>
-                <Badge bg="success" className="px-3 py-2">
-                  <FaCheckCircle className="me-1" /> Verified
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Card.Body className="pt-5 px-4 pb-4">
-          {/* Quick Stats Row */}
-          <Row className="g-3 mb-4">
-            <Col xs={6} md={3}>
-              <div className="bg-light p-3 rounded-3 text-center">
-                <FaShoppingCart size={20} className="text-primary mb-1" />
-                <h5 className="fw-bold mb-0">{stats.totalOrders}</h5>
-                <small>Total Orders</small>
-              </div>
-            </Col>
-            <Col xs={6} md={3}>
-              <div className="bg-light p-3 rounded-3 text-center">
-                <FaStar size={20} className="text-warning mb-1" />
-                <h5 className="fw-bold mb-0">{stats.averageRating}</h5>
-                <small>Avg Rating</small>
-              </div>
-            </Col>
-            <Col xs={6} md={3}>
-              <div className="bg-light p-3 rounded-3 text-center">
-                <FaCheckCircle size={20} className="text-success mb-1" />
-                <h5 className="fw-bold mb-0">{stats.completedOrders}</h5>
-                <small>Completed</small>
-              </div>
-            </Col>
-            <Col xs={6} md={3}>
-              <div className="bg-light p-3 rounded-3 text-center">
-                <FaCalendarAlt size={20} className="text-info mb-1" />
-                <h5 className="fw-bold mb-0">{formatDate(profile?.created_at)}</h5>
-                <small>Member Since</small>
-              </div>
-            </Col>
-          </Row>
-
-          {/* Profile Info Section */}
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5 className="fw-bold mb-0">Profile Information</h5>
-            {!editMode ? (
-              <Button variant="outline-primary" size="sm" onClick={() => setEditMode(true)}>
-                <FaEdit className="me-1" /> Edit
-              </Button>
-            ) : (
-              <div className="d-flex gap-2">
-                <Button variant="outline-secondary" size="sm" onClick={() => setEditMode(false)}>
-                  <FaTimes className="me-1" /> Cancel
-                </Button>
-                <Button variant="primary" size="sm" onClick={handleSaveProfile} disabled={saving}>
-                  {saving ? <Spinner size="sm" /> : <FaSave className="me-1" />} Save
-                </Button>
+            {/* Alert Message */}
+            {message.text && (
+              <div className={`alert alert-${message.type} alert-dismissible fade show`} role="alert">
+                {message.text}
+                <button type="button" className="btn-close" onClick={() => setMessage({ type: "", text: "" })}></button>
               </div>
             )}
-          </div>
 
-          {editMode ? (
-            <Form>
-              <Row>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaUser className="me-1" /> Full Name</Form.Label>
-                    <Form.Control type="text" name="name" value={formData.name} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaEnvelope className="me-1" /> Email</Form.Label>
-                    <Form.Control type="email" name="email" value={formData.email} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaPhone className="me-1" /> Phone</Form.Label>
-                    <Form.Control type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-                <Col md={6}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaMapMarkerAlt className="me-1" /> Location</Form.Label>
-                    <Form.Control type="text" name="location" value={formData.location} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaGlobe className="me-1" /> Website</Form.Label>
-                    <Form.Control type="url" name="website" value={formData.website} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-                <Col md={12}>
-                  <Form.Group className="mb-3">
-                    <Form.Label><FaInfoCircle className="me-1" /> Bio</Form.Label>
-                    <Form.Control as="textarea" rows={3} name="bio" value={formData.bio} onChange={handleInputChange} />
-                  </Form.Group>
-                </Col>
-              </Row>
-            </Form>
-          ) : (
-            <div className="bg-light p-3 rounded-3">
-              <Row>
-                <Col md={6} className="mb-2">
-                  <small className="text-muted d-block">Full Name</small>
-                  <strong>{profile?.name || authUser?.name}</strong>
-                </Col>
-                <Col md={6} className="mb-2">
-                  <small className="text-muted d-block">Email</small>
-                  <strong>{profile?.email || authUser?.email}</strong>
-                </Col>
-                <Col md={6} className="mb-2">
-                  <small className="text-muted d-block">Phone</small>
-                  <strong>{profile?.phone || "Not provided"}</strong>
-                </Col>
-                <Col md={6} className="mb-2">
-                  <small className="text-muted d-block">Location</small>
-                  <strong>{profile?.location || "Not provided"}</strong>
-                </Col>
-                <Col md={12} className="mb-2">
-                  <small className="text-muted d-block">Website</small>
-                  <strong>{profile?.website || "Not provided"}</strong>
-                </Col>
-                <Col md={12}>
-                  <small className="text-muted d-block">Bio</small>
-                  <p className="mb-0">{profile?.bio || "No bio added yet."}</p>
-                </Col>
-              </Row>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Orders Section */}
-      <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: "16px" }}>
-        <Card.Body className="p-4">
-          <h5 className="fw-bold mb-3"><FaShoppingCart className="me-2" /> Recent Orders</h5>
-          {stats.totalOrders === 0 ? (
-            <div className="text-center py-4">
-              <FaShoppingCart size={40} className="text-muted mb-2" />
-              <p className="text-muted">No orders yet</p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
-                  <tr><th>Order ID</th><th>Amount</th><th>Status</th><th>Date</th></tr>
-                </thead>
-                <tbody>
-                  {orders.slice(0, 5).map(order => (
-                    <tr key={order.id}>
-                      <td className="fw-bold">#{order.id}</td>
-                      <td>₦{(order.total_amount || 0).toLocaleString()}</td>
-                      <td><Badge bg={order.status === 'completed' ? 'success' : 'warning'}>{order.status}</Badge></td>
-                      <td>{new Date(order.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Reviews Section */}
-      <Card className="border-0 shadow-sm" style={{ borderRadius: "16px" }}>
-        <Card.Body className="p-4">
-          <h5 className="fw-bold mb-3"><FaStar className="me-2 text-warning" /> Customer Reviews</h5>
-          {reviews.length === 0 ? (
-            <div className="text-center py-4">
-              <FaStar size={40} className="text-muted mb-2" />
-              <p className="text-muted">No reviews yet</p>
-            </div>
-          ) : (
-            reviews.slice(0, 3).map(review => (
-              <div key={review.id} className="border-bottom pb-3 mb-3">
-                <div className="d-flex gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar key={i} color={i < review.rating ? "#fbbf24" : "#e2e8f0"} size={14} />
-                  ))}
+            {/* Profile Info */}
+            {!editing ? (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h5 className="fw-bold mb-0">Profile Information</h5>
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => setEditing(true)}
+                  >
+                    <FaEdit className="me-1" /> Edit Profile
+                  </button>
                 </div>
-                <p className="mb-1">{review.comment}</p>
-                <small className="text-muted">- {review.user_name} • {new Date(review.created_at).toLocaleDateString()}</small>
+
+                <div className="row g-3">
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded-3">
+                      <FaUser className="text-primary me-2" />
+                      <strong>Name:</strong>
+                      <p className="mb-0 mt-1">{user?.name || "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded-3">
+                      <FaEnvelope className="text-primary me-2" />
+                      <strong>Email:</strong>
+                      <p className="mb-0 mt-1">{user?.email || "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded-3">
+                      <FaPhone className="text-primary me-2" />
+                      <strong>Phone:</strong>
+                      <p className="mb-0 mt-1">{user?.phone || "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <div className="p-3 bg-light rounded-3">
+                      <FaMapMarker className="text-primary me-2" />
+                      <strong>Location:</strong>
+                      <p className="mb-0 mt-1">{user?.location || "Not set"}</p>
+                    </div>
+                  </div>
+                  <div className="col-12">
+                    <div className="p-3 bg-light rounded-3">
+                      <FaGlobe className="text-primary me-2" />
+                      <strong>Bio:</strong>
+                      <p className="mb-0 mt-1">{user?.bio || "No bio added yet"}</p>
+                    </div>
+                  </div>
+                  {user?.website && (
+                    <div className="col-12">
+                      <div className="p-3 bg-light rounded-3">
+                        <FaGlobe className="text-primary me-2" />
+                        <strong>Website:</strong>
+                        <p className="mb-0 mt-1">
+                          <a href={user.website} target="_blank" rel="noopener noreferrer">
+                            {user.website}
+                          </a>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            ))
-          )}
-        </Card.Body>
-      </Card>
+            ) : (
+              <form onSubmit={handleUpdateProfile}>
+                <h5 className="fw-bold mb-3">Edit Profile</h5>
+                
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Full Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    className="form-control"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="form-control"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled
+                  />
+                  <small className="text-muted">Email cannot be changed</small>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    className="form-control"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="+1234567890"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Location</label>
+                  <input
+                    type="text"
+                    name="location"
+                    className="form-control"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    placeholder="City, Country"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Bio</label>
+                  <textarea
+                    name="bio"
+                    className="form-control"
+                    rows="3"
+                    value={formData.bio}
+                    onChange={handleInputChange}
+                    placeholder="Tell us about yourself..."
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Website (Optional)</label>
+                  <input
+                    type="url"
+                    name="website"
+                    className="form-control"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={() => {
+                      setEditing(false);
+                      setFormData({
+                        name: user?.name || "",
+                        email: user?.email || "",
+                        phone: user?.phone || "",
+                        bio: user?.bio || "",
+                        location: user?.location || "",
+                        website: user?.website || ""
+                      });
+                    }}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-grow-1"
+                    disabled={loading}
+                  >
+                    {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : <FaSave className="me-2" />}
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
