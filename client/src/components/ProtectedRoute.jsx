@@ -3,45 +3,51 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+const ProtectedRoute = ({ children, allowedRoles, requireAuth = true }) => {
   const { user, loading } = useAuth();
 
-  // Show loading while checking authentication
   if (loading) {
     return (
-      <div className="text-center py-5">
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
-        <p className="mt-2">Loading...</p>
       </div>
     );
   }
 
-  // If not logged in, redirect to login
-  if (!user) {
-    console.log("ProtectedRoute: No user, redirecting to login");
+  // If route requires authentication and user is not logged in
+  if (requireAuth && !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // If specific roles are required, check them
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    console.log(`ProtectedRoute: User role ${user.role} not in allowed roles ${allowedRoles}`);
-    
-    // Redirect based on user's actual role
+  // If route is for unauthenticated users only (like login page)
+  if (!requireAuth && user) {
+    // Redirect to appropriate dashboard based on role
     if (user.role === 'seller') {
-      return <Navigate to="/seller" replace />;
+      return <Navigate to="/seller/dashboard" replace />;
+    } else if (user.role === 'buyer') {
+      return <Navigate to="/buyer/dashboard" replace />;
     }
-    if (user.role === 'admin') {
-      return <Navigate to="/admin" replace />;
-    }
-    if (user.role === 'buyer') {
-      return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Check if user has required role
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    // Redirect to appropriate dashboard
+    if (user.role === 'seller') {
+      return <Navigate to="/seller/dashboard" replace />;
+    } else if (user.role === 'buyer') {
+      return <Navigate to="/buyer/dashboard" replace />;
     }
     return <Navigate to="/" replace />;
   }
 
-  // If logged in, show the protected content
+  // If children is a function, call it with user
+  if (typeof children === 'function') {
+    return children({ user });
+  }
+
   return children;
 };
 

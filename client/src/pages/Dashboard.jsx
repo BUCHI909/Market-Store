@@ -592,7 +592,8 @@ const Dashboard = () => {
       background: '#f8f9fa',
       minHeight: '100vh',
       width: '100%',
-      padding: '0'
+      padding: '0',
+      paddingBottom: '80px'
     }}>
       {/* Toast Notifications */}
       <ToastContainer position="top-end" className="p-3" style={{ zIndex: 9999 }}>
@@ -607,7 +608,7 @@ const Dashboard = () => {
         </Toast>
       </ToastContainer>
 
-      {/* Welcome Section */}
+      {/* Welcome Section - UPDATED: Removed "Seller Dashboard" text */}
       <div style={{ 
         padding: "20px 30px",
         background: "white",
@@ -618,13 +619,23 @@ const Dashboard = () => {
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
             <h1 style={{ fontSize: "1.8rem", fontWeight: "700", margin: 0, color: "#2d3748" }}>
-              Seller Dashboard
+              {getGreeting()}, {user?.name?.split(' ')[0] || "Seller"}! 👋
             </h1>
             <p style={{ fontSize: "1rem", color: "#718096", marginTop: "8px" }}>
-              {getGreeting()}, {user?.name || "Seller"}! Welcome back to your store.
+              Welcome to your dashboard • {new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
             </p>
           </div>
           <div className="d-flex gap-2">
+            {/* Quick Stats Badge */}
+            <div className="d-none d-md-flex align-items-center me-2 px-3 py-2 bg-light rounded-pill">
+              <FaChartLine className="text-primary me-2" />
+              <small className="text-muted">Today: {formatCurrency(stats.todaySales)}</small>
+            </div>
             <Dropdown>
               <Dropdown.Toggle variant="light" size="sm" style={{ borderRadius: "20px" }}>
                 <FaBell className="me-1" /> {getUnreadCount() > 0 && <Badge bg="danger" pill style={{ fontSize: "10px", marginLeft: "4px" }}>{getUnreadCount()}</Badge>}
@@ -654,6 +665,46 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Quick Stats Row - ADDED for better mobile view */}
+        <Row className="mt-4 g-3">
+          <Col xs={6} md={3}>
+            <div className="d-flex align-items-center gap-2 p-2 bg-light rounded-3">
+              <FaBoxOpen className="text-primary" />
+              <div>
+                <small className="text-muted d-block">Products</small>
+                <strong>{stats.totalProducts}</strong>
+              </div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="d-flex align-items-center gap-2 p-2 bg-light rounded-3">
+              <FaShoppingCart className="text-success" />
+              <div>
+                <small className="text-muted d-block">Orders</small>
+                <strong>{stats.totalOrders}</strong>
+              </div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="d-flex align-items-center gap-2 p-2 bg-light rounded-3">
+              <FaStar className="text-warning" />
+              <div>
+                <small className="text-muted d-block">Rating</small>
+                <strong>{stats.averageRating || 0} ★</strong>
+              </div>
+            </div>
+          </Col>
+          <Col xs={6} md={3}>
+            <div className="d-flex align-items-center gap-2 p-2 bg-light rounded-3">
+              <FaDollarSign className="text-info" />
+              <div>
+                <small className="text-muted d-block">Revenue</small>
+                <strong>{formatCurrency(stats.totalRevenue)}</strong>
+              </div>
+            </div>
+          </Col>
+        </Row>
       </div>
 
       {/* Main Content */}
@@ -789,7 +840,7 @@ const Dashboard = () => {
         {/* Quick Actions Bar */}
         <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
           <h4 className="fw-bold mb-0">Quick Actions</h4>
-          <div className="d-flex gap-2">
+          <div className="d-flex gap-2 flex-wrap">
             <Button variant="primary" onClick={() => setShowModal(true)} style={{ borderRadius: "30px" }}>
               <FaPlus className="me-2" /> Add New Product
             </Button>
@@ -857,7 +908,7 @@ const Dashboard = () => {
                             <th>Product</th>
                             <th>Sales</th>
                             <th>Revenue</th>
-                           </tr>
+                            </tr>
                         </thead>
                         <tbody>
                           {stats.topProducts.slice(0, 5).map((p) => (

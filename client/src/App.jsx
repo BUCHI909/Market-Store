@@ -5,6 +5,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 import MobileLayout from "./layouts/MobileLayout";
+import DashboardLayout from "./layouts/DashboardLayout"; // Seller Dashboard Layout (Desktop)
+import BuyerLayout from "./layouts/BuyerLayout"; // Buyer Dashboard Layout (Desktop)
+import AdminLayout from "./layouts/AdminLayout"; // Admin Layout
 
 // Pages
 import Home from "./pages/Home";
@@ -14,7 +17,7 @@ import RegisterChoice from "./pages/RegisterChoice";
 import RegisterBuyer from "./pages/RegisterBuyer";
 import RegisterSeller from "./pages/RegisterSeller";
 import BecomeSeller from "./pages/BecomeSeller";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard"; // Seller Dashboard
 import Store from "./pages/Store";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -25,7 +28,7 @@ import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";  
-import BuyerDashboard from "./pages/BuyerDashboard";
+import BuyerDashboard from "./pages/BuyerDashboard"; // ✅ Buyer Dashboard - shows all sellers' products
 import Favorites from "./pages/Favorites";
 
 // Admin Pages
@@ -59,19 +62,22 @@ const App = () => (
         </Route>
 
         {/* ========== PROTECTED ROUTES (Mobile with BottomNav) ========== */}
-        {/* These routes are wrapped with MobileLayout which shows BottomNav ONLY when logged in */}
+        {/* These routes show BottomNav ONLY when logged in */}
         <Route element={<MobileLayout />}>
-          {/* Dashboard/Home */}
+          {/* Dashboard - Shows appropriate dashboard based on user role */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <BuyerDashboard />
+                {({ user }) => {
+                  // If user is seller, show Seller Dashboard, else show Buyer Dashboard
+                  return user?.role === 'seller' ? <Dashboard /> : <BuyerDashboard />;
+                }}
               </ProtectedRoute>
             } 
           />
           
-          {/* Store/Shop - Redirect to login if not authenticated */}
+          {/* Store - Shows all products from sellers (for buyers) */}
           <Route 
             path="/store" 
             element={
@@ -81,7 +87,7 @@ const App = () => (
             } 
           />
           
-          {/* Orders */}
+          {/* Orders - Shows order history */}
           <Route 
             path="/orders" 
             element={
@@ -91,7 +97,7 @@ const App = () => (
             } 
           />
           
-          {/* Profile */}
+          {/* Profile - User profile */}
           <Route 
             path="/profile" 
             element={
@@ -121,6 +127,16 @@ const App = () => (
             } 
           />
           
+          {/* Products Management - Sellers only */}
+          <Route 
+            path="/products" 
+            element={
+              <ProtectedRoute allowedRoles={['seller']}>
+                <Products />
+              </ProtectedRoute>
+            } 
+          />
+          
           {/* Settings */}
           <Route 
             path="/settings" 
@@ -132,7 +148,7 @@ const App = () => (
           />
         </Route>
 
-        {/* ========== SELLER DASHBOARD (Desktop) ========== */}
+        {/* ========== SELLER DASHBOARD (Desktop with Sidebar) ========== */}
         <Route
           path="/seller/*"
           element={
@@ -154,7 +170,8 @@ const App = () => (
           <Route path="favorites" element={<Favorites />} />
         </Route>
 
-        {/* ========== BUYER DASHBOARD (Desktop) ========== */}
+        {/* ========== BUYER DASHBOARD (Desktop with Sidebar) ========== */}
+        {/* This shows all sellers' products for buyers to purchase */}
         <Route
           path="/buyer/*"
           element={
@@ -165,13 +182,14 @@ const App = () => (
         >
           <Route index element={<Navigate to="/buyer/dashboard" replace />} />
           <Route path="dashboard" element={<BuyerDashboard />} />
+          <Route path="shop" element={<Shop />} />
           <Route path="orders" element={<Orders />} />
           <Route path="profile" element={<Profile />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
           <Route path="settings" element={<Settings />} />
           <Route path="wishlist" element={<Favorites />} />
-          <Route path="shop" element={<Shop />} />
+          <Route path="product/:id" element={<ProductDetails />} />
         </Route>
 
         {/* ========== ADMIN ROUTES ========== */}
@@ -186,9 +204,11 @@ const App = () => (
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="users" element={<div>Users Management</div>} />
-          <Route path="orders" element={<div>Orders Management</div>} />
-          <Route path="products" element={<div>Products Management</div>} />
+          <Route path="users" element={<div className="p-4"><h2>Users Management</h2><p>Manage all platform users</p></div>} />
+          <Route path="orders" element={<div className="p-4"><h2>Orders Management</h2><p>View and manage all orders</p></div>} />
+          <Route path="products" element={<div className="p-4"><h2>Products Management</h2><p>Manage all products across the platform</p></div>} />
+          <Route path="reviews" element={<div className="p-4"><h2>Reviews Management</h2><p>Manage customer reviews</p></div>} />
+          <Route path="sellers" element={<div className="p-4"><h2>Sellers Management</h2><p>Manage seller accounts and approvals</p></div>} />
         </Route>
 
         {/* ========== 404 PAGE ========== */}

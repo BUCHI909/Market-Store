@@ -16,7 +16,7 @@ const BottomNav = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
 
-  // Don't render BottomNav at all if not logged in
+  // ✅ DON'T SHOW BOTTOMNAV IF NOT LOGGED IN
   if (loading) return null;
   if (!user) return null;
 
@@ -26,52 +26,46 @@ const BottomNav = () => {
     return null;
   }
 
-  // Navigation items with correct paths that match your routes
+  // Navigation items
   const navItems = [
     {
       path: '/dashboard',
       icon: FaHome,
       label: 'Home',
-      show: true,
-      activePaths: ['/dashboard', '/']
+      show: true
     },
     {
-      path: '/store',
+      path: '/shop',
       icon: FaStore,
       label: 'Store',
-      show: true,
-      activePaths: ['/store', '/shop']
+      show: true
     },
     {
       path: '/add-product',
       icon: FaPlusCircle,
       label: 'Sell',
-      show: user?.role === 'seller',
-      activePaths: ['/add-product']
+      show: user?.role === 'seller'
     },
     {
       path: '/orders',
       icon: FaShoppingBag,
       label: 'Orders',
-      show: true,
-      activePaths: ['/orders']
+      show: true
     },
     {
       path: '/profile',
       icon: FaUser,
       label: 'Profile',
-      show: true,
-      activePaths: ['/profile', '/settings']
+      show: true
     }
   ];
 
   const handleNavigation = (path) => {
-    console.log('Navigating to:', path);
     navigate(path);
   };
 
-  const isActive = (item) => {
-    return item.activePaths.includes(location.pathname);
+  const isActive = (path) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   const visibleItems = navItems.filter(item => item.show);
@@ -173,7 +167,7 @@ const BottomNav = () => {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isSellButton = item.path === '/add-product';
-          const active = isActive(item);
+          const active = isActive(item.path);
           
           return (
             <button
