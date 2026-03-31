@@ -44,7 +44,16 @@ export const register = async (req, res) => {
     );
 
     const token = createToken(user.rows[0].id);
-    res.cookie("token", token, { httpOnly: true });
+    
+    // ✅ UPDATED COOKIE CONFIGURATION FOR MOBILE
+    res.cookie("token", token, { 
+      httpOnly: true,
+      secure: true,           // Required for HTTPS (Vercel/Render use HTTPS)
+      sameSite: 'none',       // Allows cross-site cookies (frontend on Vercel, backend on Render)
+      partitioned: true,      // For Chrome browsers
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/'              // Cookie available across all routes
+    });
 
     await sendEmail(email, "Welcome to MarketSphere", welcomeEmail(name));
 
@@ -197,7 +206,16 @@ export const login = async (req, res) => {
     }
 
     const token = createToken(user.rows[0].id);
-    res.cookie("token", token, { httpOnly: true });
+    
+    // ✅ UPDATED COOKIE CONFIGURATION FOR MOBILE
+    res.cookie("token", token, { 
+      httpOnly: true,
+      secure: true,           // Required for HTTPS (Vercel/Render use HTTPS)
+      sameSite: 'none',       // Allows cross-site cookies (frontend on Vercel, backend on Render)
+      partitioned: true,      // For Chrome browsers
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (optional)
+      path: '/'              // Cookie available across all routes
+    });
 
     console.log('User role:', user.rows[0].role);
 
@@ -218,13 +236,17 @@ export const login = async (req, res) => {
     if (client) client.release();
   }
 };
-
 /* ================= LOGOUT ================= */
 export const logout = (req, res) => {
-  res.clearCookie("token");
+  // ✅ Updated to clear cookie with matching options
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'none',
+    path: '/'
+  });
   res.json({ message: "Logged out successfully" });
 };
-
 /* ================= PROFILE ================= */
 export const getProfile = async (req, res) => {
   let client;
