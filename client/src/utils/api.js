@@ -1,94 +1,93 @@
-// src/utils/api.js
 import axios from "axios";
 
+// ✅ FIXED: Remove the trailing slash if present
 const API = axios.create({
-  baseURL: "https://market-store-2eop.onrender.com",
-  withCredentials: true,
+  baseURL: "https://market-store-2eop.onrender.com",  // ← NO trailing slash
+  withCredentials: true,  // ✅ This sends cookies with every request
 });
 
 // ========== AUTH ==========
-export const loginUser = (data) => API.post("/auth/login", data);
-export const logoutUser = () => API.post("/auth/logout");
-export const getCurrentUser = () =>
-  API.get("/auth/me", { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+export const loginUser = (data) => API.post("/api/auth/login", data);  // ← Added /api prefix
+export const logoutUser = () => API.post("/api/auth/logout");  // ← Added /api prefix
+export const getCurrentUser = () => API.get("/api/auth/me");  // ← Added /api prefix
 
 // ========== PRODUCTS ==========
-export const getProducts = () => API.get("/auth/products");
-export const getProductById = (id) => API.get(`/auth/products/${id}`);
-export const createProduct = (formData) => API.post("/auth/products", formData, { 
+export const getProducts = () => API.get("/api/auth/products");  // ← Added /api prefix
+export const getProductById = (id) => API.get(`/api/auth/products/${id}`);
+export const createProduct = (formData) => API.post("/api/auth/products", formData, { 
   headers: { "Content-Type": "multipart/form-data" } 
 });
-export const updateProduct = (id, formData) => API.put(`/auth/products/${id}`, formData, { 
+export const updateProduct = (id, formData) => API.put(`/api/auth/products/${id}`, formData, { 
   headers: { "Content-Type": "multipart/form-data" } 
 });
-export const deleteProduct = (id) => API.delete(`/auth/products/${id}`);
+export const deleteProduct = (id) => API.delete(`/api/auth/products/${id}`);
 
 // ========== ORDERS ==========
 export const getOrders = async () => {
-  const res = await API.get("/auth/orders");
+  const res = await API.get("/api/auth/orders");  // ← Added /api prefix
   return res.data;
 };
 
-// ✅ FIXED: Added createOrder export (this was missing!)
-export const createOrder = (orderData) => API.post("/auth/orders", orderData);
+export const createOrder = (orderData) => API.post("/api/auth/orders", orderData);
 
 export const updateOrderStatus = ({ orderId, status }) => 
-  API.put("/auth/orders/status", { orderId, status });
+  API.put("/api/auth/orders/status", { orderId, status });
 
 // ========== REVIEWS ==========
 export const getReviews = async () => {
-  const res = await API.get("/auth/reviews");
+  const res = await API.get("/api/auth/reviews");  // ← Added /api prefix
   return res.data;
 };
 
 // ========== PROFILE ==========
 export const getProfile = () => {
-  return API.get("/auth/me");
+  return API.get("/api/auth/me");
 };
 
 export const updateProfile = (data) => {
-  return API.put("/auth/update-profile", data);
+  return API.put("/api/auth/update-profile", data);
 };
 
-// ✅ FIXED: Fixed updateProfilePicture function (was missing formData parameter)
 export const updateProfilePicture = (formData) =>
-  API.post("/auth/update-profile-picture", formData, { 
+  API.post("/api/auth/update-profile-picture", formData, { 
     headers: { "Content-Type": "multipart/form-data" } 
   });
 
 // ========== SETTINGS API ==========
-export const getFullProfile = () => API.get('/settings/profile');
-export const updateProfileSettings = (data) => API.put('/settings/profile', data);
-export const uploadAvatar = (formData) => API.post('/settings/avatar', formData);
-export const updatePassword = (data) => API.put('/settings/password', data);
-export const getStoreSettings = () => API.get('/settings/store');
-export const updateStoreSettings = (data) => API.put('/settings/store', data);
-export const getNotificationSettings = () => API.get('/settings/notifications');
-export const updateNotificationSettings = (data) => API.put('/settings/notifications', data);
-export const getAppearanceSettings = () => API.get('/settings/appearance');
-export const updateAppearanceSettings = (data) => API.put('/settings/appearance', data);
-export const deleteAccount = (password) => API.delete('/settings/account', { data: { password } });
+export const getFullProfile = () => API.get('/api/settings/profile');  // ← Added /api prefix
+export const updateProfileSettings = (data) => API.put('/api/settings/profile', data);
+export const uploadAvatar = (formData) => API.post('/api/settings/avatar', formData);
+export const updatePassword = (data) => API.put('/api/settings/password', data);
+export const getStoreSettings = () => API.get('/api/settings/store');
+export const updateStoreSettings = (data) => API.put('/api/settings/store', data);
+export const getNotificationSettings = () => API.get('/api/settings/notifications');
+export const updateNotificationSettings = (data) => API.put('/api/settings/notifications', data);
+export const getAppearanceSettings = () => API.get('/api/settings/appearance');
+export const updateAppearanceSettings = (data) => API.put('/api/settings/appearance', data);
+export const deleteAccount = (password) => API.delete('/api/settings/account', { data: { password } });
 
 // ========== PAYMENT API ==========
 export const createPaymentIntent = (orderData) => 
-  API.post('/payments/create-intent', orderData);
+  API.post('/api/payments/create-intent', orderData);
 
 export const verifyPayment = (reference) => 
-  API.get(`/payments/verify/${reference}`);
+  API.get(`/api/payments/verify/${reference}`);
 
 export const getTransactions = () => 
-  API.get('/payments/transactions');
+  API.get('/api/payments/transactions');
 
 export const processRefund = (data) => 
-  API.post('/payments/refund', data);
+  API.post('/api/payments/refund', data);
 
-// ========== REQUEST INTERCEPTOR ==========
-API.interceptors.request.use((req) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
-  }
-  return req;
-});
+// ========== REQUEST INTERCEPTOR - REMOVED! ==========
+// ❌ REMOVE THIS ENTIRE INTERCEPTOR
+// We're using cookies now, not localStorage tokens
+// API.interceptors.request.use((req) => {
+//   const token = localStorage.getItem('token');
+//   if (token) {
+//     req.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return req;
+// });
 
 export default API;
