@@ -22,46 +22,52 @@ const BottomNav = () => {
     return null;
   }
 
-  // Navigation items - Now with correct paths
+  // Navigation items with correct paths that match your routes
   const navItems = [
     {
       path: '/dashboard',
       icon: FaHome,
       label: 'Home',
-      show: true
+      show: true,
+      activePaths: ['/dashboard', '/']
     },
     {
       path: '/shop',
       icon: FaStore,
       label: 'Store',
-      show: true
+      show: true,
+      activePaths: ['/shop', '/store']
     },
     {
       path: '/add-product',
       icon: FaPlusCircle,
       label: 'Sell',
-      show: user?.role === 'seller'
+      show: user?.role === 'seller',
+      activePaths: ['/add-product']
     },
     {
       path: '/orders',
       icon: FaShoppingBag,
       label: 'Orders',
-      show: true
+      show: true,
+      activePaths: ['/orders']
     },
     {
       path: '/profile',
       icon: FaUser,
       label: 'Profile',
-      show: true
+      show: true,
+      activePaths: ['/profile', '/settings']
     }
   ];
 
   const handleNavigation = (path) => {
+    console.log('Navigating to:', path);
     navigate(path);
   };
 
-  const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
+  const isActive = (item) => {
+    return item.activePaths.includes(location.pathname);
   };
 
   const visibleItems = navItems.filter(item => item.show);
@@ -163,12 +169,13 @@ const BottomNav = () => {
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isSellButton = item.path === '/add-product';
+          const active = isActive(item);
           
           return (
             <button
               key={item.path}
               onClick={() => handleNavigation(item.path)}
-              className={`bottom-nav-item ${isActive(item.path) ? 'active' : ''} ${isSellButton ? 'nav-item-sell' : ''}`}
+              className={`bottom-nav-item ${active ? 'active' : ''} ${isSellButton ? 'nav-item-sell' : ''}`}
               aria-label={item.label}
             >
               <Icon className="nav-icon" />

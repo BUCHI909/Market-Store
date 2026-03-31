@@ -7,15 +7,27 @@ const MobileLayout = () => {
   const location = useLocation();
   
   // Don't show BottomNav on these paths
-  const hideBottomNav = ['/login', '/register', '/register/buyer', '/register/seller', '/admin/login'];
+  const hideBottomNav = [
+    '/login', 
+    '/register', 
+    '/register/buyer', 
+    '/register/seller', 
+    '/admin/login',
+    '/product/',
+    '/checkout'
+  ];
   
-  const showBottomNav = !hideBottomNav.includes(location.pathname);
+  const shouldHideBottomNav = hideBottomNav.some(path => 
+    location.pathname === path || location.pathname.startsWith(path)
+  );
 
   return (
-    <div style={{ paddingBottom: showBottomNav ? "70px" : "0", minHeight: "100vh", background: "#f8f9fa" }}>
-      <Outlet />
-      {showBottomNav && <BottomNav />}
-    </div>
+    <>
+      <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
+        <Outlet />
+      </div>
+      {!shouldHideBottomNav && <BottomNav />}
+    </>
   );
 };
 
