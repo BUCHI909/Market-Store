@@ -1,18 +1,19 @@
+// src/utils/api.js
 import axios from "axios";
 
-// ✅ FIXED: Remove the trailing slash if present
 const API = axios.create({
-  baseURL: "https://market-store-2eop.onrender.com",  // ← NO trailing slash
-  withCredentials: true,  // ✅ This sends cookies with every request
+  baseURL: "https://market-store-2eop.onrender.com",  // Your backend URL
+  withCredentials: true,  // Important: Send cookies with every request
 });
 
 // ========== AUTH ==========
-export const loginUser = (data) => API.post("/api/auth/login", data);  // ← Added /api prefix
-export const logoutUser = () => API.post("/api/auth/logout");  // ← Added /api prefix
-export const getCurrentUser = () => API.get("/api/auth/me");  // ← Added /api prefix
+// ✅ FIXED: Added /api prefix to all routes
+export const loginUser = (data) => API.post("/api/auth/login", data);
+export const logoutUser = () => API.post("/api/auth/logout");
+export const getCurrentUser = () => API.get("/api/auth/me");
 
 // ========== PRODUCTS ==========
-export const getProducts = () => API.get("/api/auth/products");  // ← Added /api prefix
+export const getProducts = () => API.get("/api/auth/products");
 export const getProductById = (id) => API.get(`/api/auth/products/${id}`);
 export const createProduct = (formData) => API.post("/api/auth/products", formData, { 
   headers: { "Content-Type": "multipart/form-data" } 
@@ -24,7 +25,7 @@ export const deleteProduct = (id) => API.delete(`/api/auth/products/${id}`);
 
 // ========== ORDERS ==========
 export const getOrders = async () => {
-  const res = await API.get("/api/auth/orders");  // ← Added /api prefix
+  const res = await API.get("/api/auth/orders");
   return res.data;
 };
 
@@ -35,13 +36,13 @@ export const updateOrderStatus = ({ orderId, status }) =>
 
 // ========== REVIEWS ==========
 export const getReviews = async () => {
-  const res = await API.get("/api/auth/reviews");  // ← Added /api prefix
+  const res = await API.get("/api/auth/reviews");
   return res.data;
 };
 
 // ========== PROFILE ==========
 export const getProfile = () => {
-  return API.get("/api/auth/me");
+  return API.get("/api/auth/profile");
 };
 
 export const updateProfile = (data) => {
@@ -54,7 +55,7 @@ export const updateProfilePicture = (formData) =>
   });
 
 // ========== SETTINGS API ==========
-export const getFullProfile = () => API.get('/api/settings/profile');  // ← Added /api prefix
+export const getFullProfile = () => API.get('/api/settings/profile');
 export const updateProfileSettings = (data) => API.put('/api/settings/profile', data);
 export const uploadAvatar = (formData) => API.post('/api/settings/avatar', formData);
 export const updatePassword = (data) => API.put('/api/settings/password', data);
@@ -79,15 +80,7 @@ export const getTransactions = () =>
 export const processRefund = (data) => 
   API.post('/api/payments/refund', data);
 
-// ========== REQUEST INTERCEPTOR - REMOVED! ==========
-// ❌ REMOVE THIS ENTIRE INTERCEPTOR
-// We're using cookies now, not localStorage tokens
-// API.interceptors.request.use((req) => {
-//   const token = localStorage.getItem('token');
-//   if (token) {
-//     req.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return req;
-// });
+// ========== PUBLIC PRODUCTS ==========
+export const getPublicProducts = () => API.get("/api/auth/public/products");
 
 export default API;

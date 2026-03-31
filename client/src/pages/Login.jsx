@@ -9,54 +9,66 @@ import Footer from "../components/Footer";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { user, setUser, checkAuthStatus } = useAuth(); // Added checkAuthStatus
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState({ type: "", message: "" }); // success | danger
+  const [alert, setAlert] = useState({ type: "", message: "" });
 
-  // src/pages/Login.jsx
-// Update the useEffect to handle redirect based on user role
-
-useEffect(() => {
-  if (user && alert.type === "success") {
-    const userRole = user.role;
-    console.log("User role after login:", userRole);
-    
-    // Check if there's a pending product to add to cart
-    const pendingProduct = localStorage.getItem('pendingProduct');
-    if (pendingProduct) {
-      localStorage.removeItem('pendingProduct');
-      // After login, add to cart and go to cart page
-      const product = JSON.parse(pendingProduct);
-      addToCart(product); // You need to import useCart
-      setTimeout(() => navigate("/cart"), 1500);
-      return;
+  useEffect(() => {
+    if (user && alert.type === "success") {
+      const userRole = user.role;
+      console.log("User role after login:", userRole);
+      
+      // Check if there's a pending product to add to cart
+      const pendingProduct = localStorage.getItem('pendingProduct');
+      if (pendingProduct) {
+        localStorage.removeItem('pendingProduct');
+        const product = JSON.parse(pendingProduct);
+        // You need to import useCart and add to cart
+        // addToCart(product);
+        setTimeout(() => navigate("/cart"), 1500);
+        return;
+      }
+      
+      if (userRole === 'seller') {
+        setTimeout(() => navigate("/seller"), 1500);
+      } else if (userRole === 'admin') {
+        setTimeout(() => navigate("/admin"), 1500);
+      } else {
+        setTimeout(() => navigate("/dashboard"), 1500);
+      }
     }
-    
-    if (userRole === 'seller') {
-      setTimeout(() => navigate("/seller"), 1500);
-    } else if (userRole === 'admin') {
-      setTimeout(() => navigate("/admin"), 1500);
-    } else {
-      // Buyers go to dashboard to see all products
-      setTimeout(() => navigate("/dashboard"), 1500);
-    }
-  }
-}, [user, alert, navigate]);
+  }, [user, alert, navigate]);
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setAlert({ type: "", message: "" }); // reset on new submit
+    setAlert({ type: "", message: "" });
+    
     try {
       setLoading(true);
       const res = await loginUser(formData);
+      
+      // ✅ The cookie is automatically set by the browser
+      // ✅ The user data is in res.data.user
+      console.log('Login response:', res.data);
+      
+      // Set user in context
       setUser(res.data.user);
-      setAlert({ type: "success", message: "Login successful! Redirecting to dashboard..." });
+      
+      setAlert({ 
+        type: "success", 
+        message: "Login successful! Redirecting to dashboard..." 
+      });
+      
     } catch (err) {
-      setAlert({ type: "danger", message: err.response?.data?.message || "Login failed 😢" });
+      console.error('Login error:', err);
+      setAlert({ 
+        type: "danger", 
+        message: err.response?.data?.message || "Login failed 😢" 
+      });
     } finally {
       setLoading(false);
     }
@@ -91,7 +103,6 @@ useEffect(() => {
                   border: "1px solid #d0e4ff",
                 }}
               >
-                {/* Header */}
                 <div className="text-center mb-4">
                   <FaLock className="display-3 text-primary mb-2" />
                   <h2 className="fw-bold" style={{ color: "#0d3b66" }}>
@@ -102,7 +113,6 @@ useEffect(() => {
                   </p>
                 </div>
 
-                {/* Dynamic Alert Card */}
                 {alert.message && (
                   <div
                     className={`d-flex align-items-center mb-3 p-3 rounded-3 shadow-sm text-white`}
