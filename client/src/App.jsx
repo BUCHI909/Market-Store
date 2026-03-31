@@ -26,6 +26,7 @@ import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
+import AddProduct from "./pages/AddProduct";  
 import BuyerDashboard from "./pages/BuyerDashboard";
 
 // Admin Pages
@@ -88,6 +89,7 @@ const App = () => (
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="store" element={<Store />} />
           <Route path="products" element={<Products />} />
+          <Route path="add-product" element={<AddProduct />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />
           <Route path="logout" element={<Logout />} />

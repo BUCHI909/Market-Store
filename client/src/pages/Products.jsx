@@ -17,22 +17,33 @@ const Products = () => {
   });
   const [previewImage, setPreviewImage] = useState(null);
 
+  // ✅ Get the base URL from environment or use the Render URL
+  const BASE_URL = import.meta.env.VITE_API_URL || "https://market-store-2eop.onrender.com";
+
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const res = await getProducts();
       console.log('Fetched products:', res.data);
+      
+      // ✅ Handle different response formats
+      let productsData = [];
       if (Array.isArray(res.data)) {
-        setProducts(res.data);
+        productsData = res.data;
       } else if (res.data && Array.isArray(res.data.data)) {
-        setProducts(res.data.data);
+        productsData = res.data.data;
+      } else if (res.data && res.data.products && Array.isArray(res.data.products)) {
+        productsData = res.data.products;
       } else {
         console.error('Products data is not an array:', res.data);
-        setProducts([]);
+        productsData = [];
       }
-      setLoading(false);
+      
+      setProducts(productsData);
     } catch (err) {
       console.error("Fetch products error:", err);
       setProducts([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -43,7 +54,7 @@ const Products = () => {
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "image" && files[0]) {
+    if (name === "image" && files && files[0]) {
       setFormData({ ...formData, image: files[0] });
       setPreviewImage(URL.createObjectURL(files[0]));
     } else {
@@ -63,12 +74,20 @@ const Products = () => {
       }
 
       const res = await createProduct(formDataToSend);
+      console.log('Product created:', res.data);
+      
+      // ✅ Add new product to state without refetching
       setProducts([res.data, ...products]);
+      
+      // ✅ Reset form and close modal
       resetForm();
       setShowModal(false);
+      
+      // ✅ Show success message
+      alert("Product created successfully!");
     } catch (err) {
       console.error("Create error:", err);
-      alert("Failed to create product");
+      alert(err.response?.data?.message || "Failed to create product");
     }
   };
 
@@ -84,13 +103,21 @@ const Products = () => {
       }
 
       const res = await updateProduct(editingProduct.id, formDataToSend);
+      console.log('Product updated:', res.data);
+      
+      // ✅ Update product in state
       setProducts(products.map(p => p.id === editingProduct.id ? res.data : p));
+      
+      // ✅ Reset form and close modal
       resetForm();
       setShowModal(false);
       setEditingProduct(null);
+      
+      // ✅ Show success message
+      alert("Product updated successfully!");
     } catch (err) {
       console.error("Update error:", err);
-      alert("Failed to update product");
+      alert(err.response?.data?.message || "Failed to update product");
     }
   };
 
@@ -98,15 +125,20 @@ const Products = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
       await deleteProduct(id);
+      // ✅ Remove product from state
       setProducts(products.filter(p => p.id !== id));
+      alert("Product deleted successfully!");
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Failed to delete product");
+      alert(err.response?.data?.message || "Failed to delete product");
     }
   };
 
   const resetForm = () => {
     setFormData({ name: "", price: "", description: "", image: null });
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage); // Clean up URL
+    }
     setPreviewImage(null);
   };
 
@@ -124,8 +156,23 @@ const Products = () => {
       description: product.description || "",
       image: null
     });
-    setPreviewImage(product.image ? `http://localhost:5000${product.image}` : null);
+    // ✅ Fix image URL - use full backend URL
+    if (product.image) {
+      const imageUrl = product.image.startsWith('http') 
+        ? product.image 
+        : `${BASE_URL}${product.image}`;
+      setPreviewImage(imageUrl);
+    } else {
+      setPreviewImage(null);
+    }
     setShowModal(true);
+  };
+
+  // ✅ Function to get correct image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return "https://via.placeholder.com/60?text=No+Image";
+    if (imagePath.startsWith('http')) return imagePath;
+    return `${BASE_URL}${imagePath}`;
   };
 
   if (loading) return (
@@ -146,7 +193,7 @@ const Products = () => {
         borderRadius: "16px",
         marginBottom: "24px"
       }}>
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
             <h1 style={{ fontSize: "2.2rem", fontWeight: "700", margin: 0 }}>
               <FaBox className="me-3" />
@@ -172,7 +219,7 @@ const Products = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="d-flex gap-3 mt-4">
+        <div className="d-flex gap-3 mt-4 flex-wrap">
           <div style={{
             background: "rgba(255,255,255,0.1)",
             borderRadius: "12px",
@@ -190,7 +237,7 @@ const Products = () => {
           }}>
             <small style={{ opacity: 0.9 }}>Total Value</small>
             <h3 style={{ margin: "5px 0 0 0", fontWeight: "700" }}>
-              ₦{products.reduce((sum, p) => sum + (p.price || 0), 0).toLocaleString()}
+              ₦{products.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0).toLocaleString()}
             </h3>
           </div>
         </div>
@@ -222,9 +269,12 @@ const Products = () => {
                         boxShadow: "0 4px 10px rgba(0,0,0,0.1)"
                       }}>
                         <img
-                          src={product.image ? `http://localhost:5000${product.image}` : "https://via.placeholder.com/60"}
+                          src={getImageUrl(product.image)}
                           alt={product.name}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/60?text=No+Image";
+                          }}
                         />
                       </div>
                     </td>
@@ -234,7 +284,7 @@ const Products = () => {
                     </td>
                     <td style={{ padding: "15px 20px" }}>
                       <Badge bg="success" style={{ fontSize: "1rem", padding: "8px 15px", borderRadius: "30px" }}>
-                        ₦{product.price?.toLocaleString()}
+                        ₦{parseFloat(product.price).toLocaleString()}
                       </Badge>
                     </td>
                     <td style={{ padding: "15px 20px" }}>
@@ -287,7 +337,11 @@ const Products = () => {
       </div>
 
       {/* Create/Edit Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered size="lg">
+      <Modal show={showModal} onHide={() => {
+        setShowModal(false);
+        resetForm();
+        setEditingProduct(null);
+      }} centered size="lg">
         <Modal.Header closeButton style={{ 
           border: "none", 
           padding: "25px 25px 0",
@@ -332,6 +386,7 @@ const Products = () => {
                 onChange={handleInputChange}
                 required
                 placeholder="e.g., 45000"
+                step="0.01"
                 style={{ padding: "12px", borderRadius: "12px" }}
               />
             </Form.Group>
@@ -382,7 +437,11 @@ const Products = () => {
             <div className="d-flex justify-content-end gap-2 mt-4">
               <Button 
                 variant="light" 
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                  setEditingProduct(null);
+                }}
                 style={{ borderRadius: "12px", padding: "12px 25px" }}
               >
                 Cancel

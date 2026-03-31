@@ -182,42 +182,51 @@ export const registerSeller = async (req, res) => {
 };
 
 /* ================= LOGIN ================= */
+// backend/controllers/authController.js - Update login function
 export const login = async (req, res) => {
   let client;
   try {
     const { email, password } = req.body;
 
-    console.log('Login attempt:', email);
+    // ✅ Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    console.log('🔐 Login attempt:', email);
+    console.log('Request body:', req.body);
 
     client = await pool.connect();
 
     const user = await client.query(
       "SELECT id, name, email, password, role FROM users WHERE email=$1",
-      [email]
+      [email.toLowerCase()] // ✅ Normalize email to lowercase
     );
 
     if (!user.rows.length) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const valid = await bcrypt.compare(password, user.rows[0].password);
     if (!valid) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     const token = createToken(user.rows[0].id);
     
-    // ✅ UPDATED COOKIE CONFIGURATION FOR MOBILE
+    // ✅ Cookie options
+    const isProduction = process.env.NODE_ENV === 'production';
+    
     res.cookie("token", token, { 
       httpOnly: true,
-      secure: true,           // Required for HTTPS (Vercel/Render use HTTPS)
-      sameSite: 'none',       // Allows cross-site cookies (frontend on Vercel, backend on Render)
-      partitioned: true,      // For Chrome browsers
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (optional)
-      path: '/'              // Cookie available across all routes
+      secure: isProduction, // Only secure in production
+      sameSite: isProduction ? 'none' : 'lax',
+      partitioned: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/'
     });
 
-    console.log('User role:', user.rows[0].role);
+    console.log('✅ Login successful for:', email);
 
     res.json({
       message: "Logged in successfully",
@@ -226,12 +235,15 @@ export const login = async (req, res) => {
         name: user.rows[0].name,
         email: user.rows[0].email,
         role: user.rows[0].role
-      },
-      token
+      }
     });
   } catch (err) {
-    console.error("Login Error:", err);
-    res.status(500).json({ message: "Server error during login" });
+    console.error("❌ Login Error Details:", err);
+    console.error("Stack trace:", err.stack);
+    res.status(500).json({ 
+      message: "Server error during login",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   } finally {
     if (client) client.release();
   }
