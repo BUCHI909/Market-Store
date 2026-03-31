@@ -1,13 +1,14 @@
 // src/context/AuthContext.jsx
+// Ensure you have this structure
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getCurrentUser, logoutUser } from '../utils/api';
+import { getCurrentUser } from '../utils/api';
 
 const AuthContext = createContext();
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };
@@ -15,63 +16,37 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    checkAuthStatus();
+    checkAuth();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const checkAuth = async () => {
     try {
-      setLoading(true);
-      const response = await getCurrentUser();
-      console.log('Auth check response:', response.data); // Debug log
-      
-      // ✅ The response structure is { user: {...} }
-      if (response.data && response.data.user) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const response = await getCurrentUser();
         setUser(response.data.user);
-      } else {
-        setUser(null);
       }
-      setError(null);
-    } catch (err) {
-      console.log('Auth check failed:', err.response?.status);
+    } catch (error) {
+      console.log('Not authenticated');
       setUser(null);
-      if (err.response?.status !== 401) {
-        setError(err.response?.data?.message || 'Authentication check failed');
-      }
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (userData) => {
-    console.log('Setting user in context:', userData);
+  const login = (userData) => {
     setUser(userData);
   };
 
-  const logout = async () => {
-    try {
-      await logoutUser();
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      setUser(null);
-    }
-  };
-
-  const value = {
-    user,
-    setUser: login,
-    loading,
-    error,
-    logout,
-    checkAuthStatus,
-    isAuthenticated: !!user,
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('token');
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

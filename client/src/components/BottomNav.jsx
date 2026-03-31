@@ -14,7 +14,11 @@ import { useAuth } from '../context/AuthContext';
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // Don't render BottomNav at all if not logged in
+  if (loading) return null;
+  if (!user) return null;
 
   // Don't show bottom nav on auth pages
   const hideNavPaths = ['/login', '/register', '/register/buyer', '/register/seller'];
@@ -32,11 +36,11 @@ const BottomNav = () => {
       activePaths: ['/dashboard', '/']
     },
     {
-      path: '/shop',
+      path: '/store',
       icon: FaStore,
       label: 'Store',
       show: true,
-      activePaths: ['/shop', '/store']
+      activePaths: ['/store', '/shop']
     },
     {
       path: '/add-product',

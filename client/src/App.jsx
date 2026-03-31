@@ -43,7 +43,8 @@ const App = () => (
   <AdminAuthProvider>
     <ErrorBoundary>
       <Routes>
-        {/* PUBLIC ROUTES - With Navbar */}
+        {/* ========== PUBLIC ROUTES ========== */}
+        {/* These routes use MainLayout with Navbar, NO BottomNav */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -57,7 +58,8 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
         </Route>
 
-        {/* PROTECTED ROUTES - With BottomNav for Mobile */}
+        {/* ========== PROTECTED ROUTES (Mobile with BottomNav) ========== */}
+        {/* These routes are wrapped with MobileLayout which shows BottomNav ONLY when logged in */}
         <Route element={<MobileLayout />}>
           {/* Dashboard/Home */}
           <Route 
@@ -69,8 +71,15 @@ const App = () => (
             } 
           />
           
-          {/* Store/Shop - Public but with BottomNav */}
-          <Route path="/store" element={<Shop />} />
+          {/* Store/Shop - Redirect to login if not authenticated */}
+          <Route 
+            path="/store" 
+            element={
+              <ProtectedRoute>
+                <Shop />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Orders */}
           <Route 
@@ -123,7 +132,7 @@ const App = () => (
           />
         </Route>
 
-        {/* SELLER DASHBOARD - Desktop view with sidebar */}
+        {/* ========== SELLER DASHBOARD (Desktop) ========== */}
         <Route
           path="/seller/*"
           element={
@@ -145,7 +154,7 @@ const App = () => (
           <Route path="favorites" element={<Favorites />} />
         </Route>
 
-        {/* BUYER DASHBOARD - Desktop view with sidebar */}
+        {/* ========== BUYER DASHBOARD (Desktop) ========== */}
         <Route
           path="/buyer/*"
           element={
@@ -165,7 +174,7 @@ const App = () => (
           <Route path="shop" element={<Shop />} />
         </Route>
 
-        {/* ADMIN ROUTES */}
+        {/* ========== ADMIN ROUTES ========== */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin/*"
@@ -182,7 +191,7 @@ const App = () => (
           <Route path="products" element={<div>Products Management</div>} />
         </Route>
 
-        {/* 404 Page */}
+        {/* ========== 404 PAGE ========== */}
         <Route path="*" element={
           <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh", background: "#f8f9fa" }}>
             <div className="text-center">
