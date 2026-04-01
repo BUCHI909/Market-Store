@@ -28,7 +28,7 @@ import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";  
-import BuyerDashboard from "./pages/BuyerDashboard"; // ✅ Buyer Dashboard - shows all sellers' products
+import BuyerDashboard from "./pages/BuyerDashboard";
 import Favorites from "./pages/Favorites";
 
 // Admin Pages
@@ -47,7 +47,6 @@ const App = () => (
     <ErrorBoundary>
       <Routes>
         {/* ========== PUBLIC ROUTES ========== */}
-        {/* These routes use MainLayout with Navbar, NO BottomNav */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -62,7 +61,6 @@ const App = () => (
         </Route>
 
         {/* ========== PROTECTED ROUTES (Mobile with BottomNav) ========== */}
-        {/* These routes show BottomNav ONLY when logged in */}
         <Route element={<MobileLayout />}>
           {/* Dashboard - Shows appropriate dashboard based on user role */}
           <Route 
@@ -70,14 +68,12 @@ const App = () => (
             element={
               <ProtectedRoute>
                 {({ user }) => {
-                  // If user is seller, show Seller Dashboard, else show Buyer Dashboard
                   return user?.role === 'seller' ? <Dashboard /> : <BuyerDashboard />;
                 }}
               </ProtectedRoute>
             } 
           />
           
-          {/* Store - Shows all products from sellers (for buyers) */}
           <Route 
             path="/store" 
             element={
@@ -87,7 +83,6 @@ const App = () => (
             } 
           />
           
-          {/* Orders - Shows order history */}
           <Route 
             path="/orders" 
             element={
@@ -97,7 +92,6 @@ const App = () => (
             } 
           />
           
-          {/* Profile - User profile */}
           <Route 
             path="/profile" 
             element={
@@ -107,7 +101,6 @@ const App = () => (
             } 
           />
           
-          {/* Favorites/Wishlist */}
           <Route 
             path="/favorites" 
             element={
@@ -117,7 +110,6 @@ const App = () => (
             } 
           />
           
-          {/* Add Product - Sellers only */}
           <Route 
             path="/add-product" 
             element={
@@ -127,7 +119,6 @@ const App = () => (
             } 
           />
           
-          {/* Products Management - Sellers only */}
           <Route 
             path="/products" 
             element={
@@ -137,7 +128,6 @@ const App = () => (
             } 
           />
           
-          {/* Settings */}
           <Route 
             path="/settings" 
             element={
@@ -148,7 +138,7 @@ const App = () => (
           />
         </Route>
 
-        {/* ========== SELLER DASHBOARD (Desktop with Sidebar) ========== */}
+        {/* ========== SELLER DASHBOARD (Desktop) ========== */}
         <Route
           path="/seller/*"
           element={
@@ -170,8 +160,7 @@ const App = () => (
           <Route path="favorites" element={<Favorites />} />
         </Route>
 
-        {/* ========== BUYER DASHBOARD (Desktop with Sidebar) ========== */}
-        {/* This shows all sellers' products for buyers to purchase */}
+        {/* ========== BUYER DASHBOARD (Desktop) ========== */}
         <Route
           path="/buyer/*"
           element={
@@ -204,11 +193,11 @@ const App = () => (
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="users" element={<div className="p-4"><h2>Users Management</h2><p>Manage all platform users</p></div>} />
-          <Route path="orders" element={<div className="p-4"><h2>Orders Management</h2><p>View and manage all orders</p></div>} />
-          <Route path="products" element={<div className="p-4"><h2>Products Management</h2><p>Manage all products across the platform</p></div>} />
-          <Route path="reviews" element={<div className="p-4"><h2>Reviews Management</h2><p>Manage customer reviews</p></div>} />
-          <Route path="sellers" element={<div className="p-4"><h2>Sellers Management</h2><p>Manage seller accounts and approvals</p></div>} />
+          <Route path="users" element={<div className="p-4"><h2>Users Management</h2></div>} />
+          <Route path="sellers" element={<div className="p-4"><h2>Sellers Management</h2></div>} />
+          <Route path="orders" element={<div className="p-4"><h2>Orders Management</h2></div>} />
+          <Route path="products" element={<div className="p-4"><h2>Products Management</h2></div>} />
+          <Route path="reviews" element={<div className="p-4"><h2>Reviews Management</h2></div>} />
         </Route>
 
         {/* ========== 404 PAGE ========== */}

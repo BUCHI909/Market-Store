@@ -28,6 +28,8 @@ const ProtectedRoute = ({ children, allowedRoles, requireAuth = true }) => {
       return <Navigate to="/seller/dashboard" replace />;
     } else if (user.role === 'buyer') {
       return <Navigate to="/buyer/dashboard" replace />;
+    } else if (user.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
     }
     return <Navigate to="/dashboard" replace />;
   }
@@ -39,6 +41,8 @@ const ProtectedRoute = ({ children, allowedRoles, requireAuth = true }) => {
       return <Navigate to="/seller/dashboard" replace />;
     } else if (user.role === 'buyer') {
       return <Navigate to="/buyer/dashboard" replace />;
+    } else if (user.role === 'admin') {
+      return <Navigate to="/admin/dashboard" replace />;
     }
     return <Navigate to="/" replace />;
   }

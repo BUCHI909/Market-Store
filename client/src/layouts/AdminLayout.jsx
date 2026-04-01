@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminSidebar from '../components/admin/AdminSidebar'; // ✅ Using your existing component
 import AdminHeader from '../components/admin/AdminHeader';
 import { Spinner } from 'react-bootstrap';
 
