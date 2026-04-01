@@ -5,9 +5,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 import MobileLayout from "./layouts/MobileLayout";
-import DashboardLayout from "./components/DashboardLayout"; // Seller Dashboard Layout (Desktop)
-import BuyerLayout from "./layouts/BuyerLayout"; // Buyer Dashboard Layout (Desktop)
-import AdminLayout from "./layouts/AdminLayout"; // Admin Layout
+import DashboardLayout from "./components/DashboardLayout"; // ✅ From components
+import BuyerLayout from "./layouts/BuyerLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Pages
 import Home from "./pages/Home";
@@ -37,6 +37,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardRedirect from "./components/DashboardRedirect";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Context
@@ -62,18 +63,17 @@ const App = () => (
 
         {/* ========== PROTECTED ROUTES (Mobile with BottomNav) ========== */}
         <Route element={<MobileLayout />}>
-          {/* Dashboard - Shows appropriate dashboard based on user role */}
+          {/* Dashboard Redirect - Routes to appropriate dashboard based on role */}
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                {({ user }) => {
-                  return user?.role === 'seller' ? <Dashboard /> : <BuyerDashboard />;
-                }}
+                <DashboardRedirect />
               </ProtectedRoute>
             } 
           />
           
+          {/* Store - Browse all products */}
           <Route 
             path="/store" 
             element={
@@ -83,6 +83,7 @@ const App = () => (
             } 
           />
           
+          {/* Orders - View order history */}
           <Route 
             path="/orders" 
             element={
@@ -92,6 +93,7 @@ const App = () => (
             } 
           />
           
+          {/* Profile - User profile */}
           <Route 
             path="/profile" 
             element={
@@ -101,6 +103,7 @@ const App = () => (
             } 
           />
           
+          {/* Favorites/Wishlist */}
           <Route 
             path="/favorites" 
             element={
@@ -110,6 +113,7 @@ const App = () => (
             } 
           />
           
+          {/* Add Product - Sellers only */}
           <Route 
             path="/add-product" 
             element={
@@ -119,6 +123,7 @@ const App = () => (
             } 
           />
           
+          {/* Products Management - Sellers only */}
           <Route 
             path="/products" 
             element={
@@ -128,6 +133,7 @@ const App = () => (
             } 
           />
           
+          {/* Settings */}
           <Route 
             path="/settings" 
             element={
@@ -138,7 +144,7 @@ const App = () => (
           />
         </Route>
 
-        {/* ========== SELLER DASHBOARD (Desktop) ========== */}
+        {/* ========== SELLER DASHBOARD (Desktop with Sidebar) ========== */}
         <Route
           path="/seller/*"
           element={
@@ -160,7 +166,7 @@ const App = () => (
           <Route path="favorites" element={<Favorites />} />
         </Route>
 
-        {/* ========== BUYER DASHBOARD (Desktop) ========== */}
+        {/* ========== BUYER DASHBOARD (Desktop with Sidebar) ========== */}
         <Route
           path="/buyer/*"
           element={
@@ -193,11 +199,56 @@ const App = () => (
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="users" element={<div className="p-4"><h2>Users Management</h2></div>} />
-          <Route path="sellers" element={<div className="p-4"><h2>Sellers Management</h2></div>} />
-          <Route path="orders" element={<div className="p-4"><h2>Orders Management</h2></div>} />
-          <Route path="products" element={<div className="p-4"><h2>Products Management</h2></div>} />
-          <Route path="reviews" element={<div className="p-4"><h2>Reviews Management</h2></div>} />
+          <Route path="users" element={
+            <div className="p-4">
+              <h2 className="fw-bold mb-3">Users Management</h2>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <p>Manage all platform users here.</p>
+                </div>
+              </div>
+            </div>
+          } />
+          <Route path="sellers" element={
+            <div className="p-4">
+              <h2 className="fw-bold mb-3">Sellers Management</h2>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <p>Manage seller accounts and approvals.</p>
+                </div>
+              </div>
+            </div>
+          } />
+          <Route path="orders" element={
+            <div className="p-4">
+              <h2 className="fw-bold mb-3">Orders Management</h2>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <p>View and manage all orders across the platform.</p>
+                </div>
+              </div>
+            </div>
+          } />
+          <Route path="products" element={
+            <div className="p-4">
+              <h2 className="fw-bold mb-3">Products Management</h2>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <p>Manage all products across the platform.</p>
+                </div>
+              </div>
+            </div>
+          } />
+          <Route path="reviews" element={
+            <div className="p-4">
+              <h2 className="fw-bold mb-3">Reviews Management</h2>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body">
+                  <p>Manage customer reviews and feedback.</p>
+                </div>
+              </div>
+            </div>
+          } />
         </Route>
 
         {/* ========== 404 PAGE ========== */}

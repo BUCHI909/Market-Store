@@ -47,11 +47,6 @@ const ProtectedRoute = ({ children, allowedRoles, requireAuth = true }) => {
     return <Navigate to="/" replace />;
   }
 
-  // If children is a function, call it with user
-  if (typeof children === 'function') {
-    return children({ user });
-  }
-
   return children;
 };
 
