@@ -5,7 +5,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 import MobileLayout from "./layouts/MobileLayout";
-import DashboardLayout from "./layouts/DashboardLayout"; // Seller Dashboard Layout (Desktop)
+import DashboardLayout from "./components/DashboardLayout"; // Seller Dashboard Layout (Desktop)
 import BuyerLayout from "./layouts/BuyerLayout"; // Buyer Dashboard Layout (Desktop)
 import AdminLayout from "./layouts/AdminLayout"; // Admin Layout
 
