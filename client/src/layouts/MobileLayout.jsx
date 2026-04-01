@@ -15,7 +15,8 @@ const MobileLayout = () => {
     '/register/buyer', 
     '/register/seller', 
     '/admin/login',
-    '/become-seller'
+    '/become-seller',
+    '/home',
   ];
   
   const isAuthPage = hideBottomNavPaths.some(path => 

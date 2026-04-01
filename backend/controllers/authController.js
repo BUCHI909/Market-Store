@@ -99,6 +99,20 @@ export const registerBuyer = async (req, res) => {
     );
 
     console.log('✅ Buyer registered successfully:', email);
+    
+
+    res.cookie("token", token ,{
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      partitioned : true,
+      maxAge : 7 * 24 * 60 * 60 * 1000,
+      path : '/'
+    
+    }); 
+
+
+    await sendEmail(email ,"Welcome to MarketSphere" , welcomeEmail(name));
 
     res.json({
       success: true,
@@ -158,6 +172,18 @@ export const registerSeller = async (req, res) => {
       await client.query('COMMIT');
 
       console.log('✅ Seller registered successfully:', email);
+
+      res.cookies ( 'token', token ,{
+        httpOnly: true ,
+        secure: true,
+        sameSite:'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/'
+         
+
+      });
+
+      await sendEmail(email , "Welcome to MarketSphere" , welcomeEmail(name));
 
       res.json({
         success: true,
