@@ -14,7 +14,7 @@ const app = express();
 // ✅ FIXED: Remove trailing slash from Vercel URL
 const allowedOrigins = [
   "http://localhost:5173", 
-  "https://market-store-gamma.vercel.app"  // ← NO trailing slash!
+  "https://market-store-cm5d.vercel.app"  // ← NO trailing slash!
 ]; 
 
 app.use(cors({
