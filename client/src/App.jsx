@@ -5,7 +5,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 // Layouts
 import MainLayout from "./layouts/MainLayout";
 import MobileLayout from "./layouts/MobileLayout";
-import DashboardLayout from "./pages/DashboardLayout"; // ✅ CORRECT: from pages folder
+import DashboardLayout from "./pages/DashboardLayout";
 import BuyerLayout from "./layouts/BuyerLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
@@ -29,7 +29,7 @@ import Checkout from "./pages/Checkout";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";  
 import BuyerDashboard from "./pages/BuyerDashboard";
-import Favorites from "./pages/Favorites";
+import Favorites from "./pages/Favorites"; // ✅ Now exists
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
