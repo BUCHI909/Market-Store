@@ -6,6 +6,8 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
+const API_URL = "https://market-store-2eop.onrender.com"; // ✅ FIXED: Using Render URL
+
 const RegisterSeller = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,7 @@ const RegisterSeller = () => {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:5000/api/auth/register-seller",
+        `${API_URL}/api/auth/register-seller`,  // ✅ FIXED: Using Render URL
         {
           name: formData.name,
           email: formData.email,
@@ -60,6 +62,7 @@ const RegisterSeller = () => {
         navigate("/login");
       }, 2000);
     } catch (err) {
+      console.error("Registration error:", err);
       setAlert({ type: "danger", message: err.response?.data?.message || "Registration failed" });
     } finally {
       setLoading(false);
@@ -156,4 +159,4 @@ const RegisterSeller = () => {
   );
 };
 
-export default RegisterSeller; // ✅ MAKE SURE THIS IS HERE
+export default RegisterSeller;

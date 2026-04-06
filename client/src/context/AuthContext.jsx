@@ -1,5 +1,4 @@
 // src/context/AuthContext.jsx
-// Ensure you have this structure
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { getCurrentUser } from '../utils/api';
 
@@ -45,8 +44,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
+  // ✅ FIXED: Now providing setUser to components that need it
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      setUser,        // ← ADDED THIS
+      loading, 
+      login, 
+      logout, 
+      checkAuth 
+    }}>
       {children}
     </AuthContext.Provider>
   );

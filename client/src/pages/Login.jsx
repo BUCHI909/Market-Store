@@ -14,65 +14,69 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({ type: "", message: "" });
 
-  useEffect(() => {
-    if (user && alert.type === "success") {
-      const userRole = user.role;
-      console.log("User role after login:", userRole);
-      
-      // Check if there's a pending product to add to cart
-      const pendingProduct = localStorage.getItem('pendingProduct');
-      if (pendingProduct) {
-        localStorage.removeItem('pendingProduct');
-        const product = JSON.parse(pendingProduct);
-        // You need to import useCart and add to cart
-        // addToCart(product);
-        setTimeout(() => navigate("/cart"), 1500);
-        return;
-      }
-      
-      if (userRole === 'seller') {
-        setTimeout(() => navigate("/seller"), 1500);
-      } else if (userRole === 'admin') {
-        setTimeout(() => navigate("/admin"), 1500);
-      } else {
-        setTimeout(() => navigate("/dashboard"), 1500);
-      }
-    }
-  }, [user, alert, navigate]);
+ 
 
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAlert({ type: "", message: "" });
+ // In Login.jsx, replace the handleSubmit function with this:
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setAlert({ type: "", message: "" });
+  
+  try {
+    setLoading(true);
+    const res = await loginUser(formData);
     
-    try {
-      setLoading(true);
-      const res = await loginUser(formData);
-      
-      // ✅ The cookie is automatically set by the browser
-      // ✅ The user data is in res.data.user
-      console.log('Login response:', res.data);
-      
-      // Set user in context
+    console.log('Login response:', res.data);
+    
+    // ✅ FIXED: Check if setUser exists before calling it
+    if (setUser && typeof setUser === 'function') {
       setUser(res.data.user);
-      
-      setAlert({ 
-        type: "success", 
-        message: "Login successful! Redirecting to dashboard..." 
-      });
-      
-    } catch (err) {
-      console.error('Login error:', err);
-      setAlert({ 
-        type: "danger", 
-        message: err.response?.data?.message || "Login failed 😢" 
-      });
-    } finally {
-      setLoading(false);
+    } else {
+      console.error('setUser is not a function! Check AuthContext');
     }
-  };
+    
+    setAlert({ 
+      type: "success", 
+      message: "Login successful! Redirecting to dashboard..." 
+    });
+    
+  } catch (err) {
+    console.error('Login error:', err);
+    setAlert({ 
+      type: "danger", 
+      message: err.response?.data?.message || "Login failed 😢" 
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Also fix the useEffect dependency (remove alert from dependencies):
+useEffect(() => {
+  if (user && user.role) {  // ✅ FIXED: Check for user.role instead of alert.type
+    const userRole = user.role;
+    console.log("User role after login:", userRole);
+    
+    const pendingProduct = localStorage.getItem('pendingProduct');
+    if (pendingProduct) {
+      localStorage.removeItem('pendingProduct');
+      const product = JSON.parse(pendingProduct);
+      setTimeout(() => navigate("/cart"), 1500);
+      return;
+    }
+    
+    if (userRole === 'seller') {
+      setTimeout(() => navigate("/seller"), 1500);
+    } else if (userRole === 'admin') {
+      setTimeout(() => navigate("/admin"), 1500);
+    } else {
+      setTimeout(() => navigate("/dashboard"), 1500);
+    }
+  }
+}, [user, navigate]);  // ✅ FIXED: Removed 'alert' from dependencies
 
   const getAlertIcon = () => {
     if (alert.type === "success") return <FaCheckCircle className="me-2" />;
