@@ -2,8 +2,9 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://market-store-2eop.onrender.com",  // Your backend URL
-  withCredentials: true,  // Important: Send cookies with every request
+  baseURL: "https://market-store-2eop.onrender.com",
+  withCredentials: true,
+  timeout: 30000, // Increase from default to 30 seconds
 });
 
 // ========== AUTH ==========
